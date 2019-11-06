@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta content="IE=edge" http-equiv="X-UA-Compatible" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta content="Page description" name="description" />
+    <meta name="google" content="notranslate" />
+    <meta
+      content="Mashup templates have been developped by Orson.io team"
+      name="author"
+    />
+
+    <!-- Disable tap highlight on IE -->
+    <meta name="msapplication-tap-highlight" content="no" />
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.5/css/bulma.min.css"
+    />
+    <title>426 - Twitter</title>
+
+    <link href="./styles.css" rel="stylesheet" />
+  </head>
+
+  <body>
+    <!-- Add your content of header -->
+    <header class="">
+      <nav class="sidebar">
+        <div class="" id="">
+          <div class="site-header hidden-xs">
+            <a class="site-brand" href="./index.html" title="">
+              comp 426 Twitter
+            </a>
+            <p>Han W.</p>
+            <p>hanwang@ad.unc.edu</p>
+
+            <!-- detail Modal -->
+            <div class="modal tweetModal">
+              <div class="modal-background tweetModal-background"></div>
+              <div class="modal-card">
+                <header class="modal-card-head">
+                  <p style="text-align: left" class="modal-card-title">
+                    Details
+                  </p>
+                  <button
+                    class="delete tweetModal-delete"
+                    aria-label="close"
+                  ></button>
+                </header>
+                <section class="modal-card-body"></section>
+              </div>
+            </div>
+
+            <!-- end of detail modal -->
+
+            <!-- Modal--------------------->
+            <div class="modal inactiveModal">
+              <div class="modal-background"></div>
+              <div class="modal-inner">
+                <!-- Any other Bulma elements you want -->
+                <div class="field ">
+                  <div class="control">
+                    <textarea
+                      class="dialog textarea is-primary"
+                      placeholder="Primary textarea"
+                    ></textarea>
+                  </div>
+                </div>
+                <div class="field is-grouped">
+                  <div class="control">
+                    <button class="button is-primary dialog submit">
+                      Submit
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <button class="modal-close is-large" aria-label="close"></button>
+            </div>
+            <!-- Modal ending------------------- -->
+          </div>
+          <ul class="nav">
+            <li>
+              <a href="#"
+                >All <span id="allTweetCount" style="color: gray"></span
+              ></a>
+            </li>
+
+            <li>
+              <a id="myTweet" href="#" title=""
+                >My Tweets
+                <span id="myTweetCount" style="color: #808080"></span>
+              </a>
+            </li>
+
+            <li>Post a new tweet below</li>
+
+            <textarea
+              class="newPost textarea is-primary is-medium"
+              name=""
+              id=""
+              cols="30"
+              rows="10"
+              placeholder="What's on your mind today? "
+            ></textarea>
+
+            <button
+              style="font-size: 1.5rem; margin-top: 10px; margin-left: 43px;"
+              class="button is-primary is-light postBtn"
+            >
+              new tweet
+            </button>
+          </ul>
+
+          <nav class="nav-footer">
+            <p class="nav-footer-social-buttons">
+              <a class="fa-icon" href="https://twitter.com/" title="">
+                <i class="fa fa-twitter"></i>
+              </a>
+            </p>
+            <p>
+              comp426 A09 | Website created by
+              <a
+                href="https://jenny1998.github.io/personal-website/"
+                title="Create website with free html template"
+                >Han Wang</a
+              >
+              /
+              <a href="https://jenny1998.github.io/2048">Maybe 2048 as well</a>
+            </p>
+          </nav>
+        </div>
+      </nav>
+    </header>
+    <main id="wrapper"></main>
+    <script src="../node_modules/axios/dist/axios.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+
+    <script>
+      var count = 1;
+      function increPage() {
+        count++;
+        read(count, "append");
+      }
+
+      $(document).ready(function() {
+        read();
+
+        $(window).scroll(function() {
+          if (
+            $(window).scrollTop() + $(window).height() ==
+            $(document).height()
+          ) {
+            increPage();
+          }
+        });
+        $(".postBtn").click(async function() {
+          if ($(".newPost").val().length > 0) {
+            post($(".newPost").val());
+          } else {
+            alert("pleae fill in the content of the post!");
+          }
+        });
+
+        $("main").on("click", ".modalTrigger", function() {
+          $(".inactiveModal").addClass("is-active");
+          $(".submit").attr(
+            "id",
+            $(this)
+              .parent()
+              .parent()
+              .attr("id")
+          );
+          $(".inactiveModal").attr("id", $(this).attr("id"));
+        });
+
+        $(".modal-close").click(function() {
+          $(".inactiveModal").removeClass("is-active");
+        });
+        $(".modal-background").click(function() {
+          $(".inactiveModal").removeClass("is-active");
+        });
+
+        $(".submit").click(function() {
+          let action = $(".inactiveModal").attr("id");
+          if (action == "reply") {
+            reply($(this).attr("id"), $(".textarea").val());
+          } else if (action == "retweet") {
+            retweet($(this).attr("id"), $(".textarea").val());
+          } else if (action == "update") {
+            update($(this).attr("id"), $(".textarea").val());
+          }
+          $(".inactiveModal").removeClass("is-active");
+        });
+
+        $(".tweetModal-background").click(function() {
+          $(".tweetModal").removeClass("is-active");
+        });
+
+        $(".tweetModal-delete").click(function() {
+          $(".tweetModal").removeClass("is-active");
+        });
+      });
+
+      async function post(content) {
+        console.log("im here");
+        const result = await axios({
+          method: "post",
+          url: "https://comp426fa19.cs.unc.edu/a09/tweets",
+          withCredentials: true,
+          data: {
+            body: content
+          }
+        }).then(function() {
+          read(count, "refresh");
+          $("textarea").val("");
+        });
+      }
+
+      async function update(id, content) {
+        const result = await axios({
+          method: "put",
+          url: `https://comp426fa19.cs.unc.edu/a09/tweets/${id}`,
+          withCredentials: true,
+          data: {
+            body: content
+          }
+        })
+          .then(function() {
+            read(count, "refresh");
+          })
+          .catch({});
+      }
+      async function remove(id) {
+        const result = await axios({
+          method: "delete",
+          url: `https://comp426fa19.cs.unc.edu/a09/tweets/${id}`,
+          withCredentials: true
+        })
+          .then(function() {
+            read(count, "refresh");
+          })
+          .catch({});
+      }
+
+      async function like(id) {
+        try {
+          const result = await axios({
+            method: "put",
+            url: `https://comp426fa19.cs.unc.edu/a09/tweets/${id}/like`,
+            withCredentials: true
+          });
+          read(count, "refresh");
+        } catch (err) {
+          // console.log(err);
+          try {
+            unlike(id);
+            read(count, "refresh");
+          } catch (error) {
+            console.log("cannot unlike");
+          }
+        }
+      }
+
+      async function retweet(id, content) {
+        const result = await axios({
+          method: "post",
+          url: "https://comp426fa19.cs.unc.edu/a09/tweets",
+          withCredentials: true,
+          data: {
+            type: "retweet",
+            parent: id,
+            body: content
+          }
+        })
+          .then(function(result) {
+            alert("retweeted successfully!");
+            read(count, "refresh");
+          })
+          .catch(() => {
+            alert("retweet failed!");
+          });
+      }
+
+      async function reply(id, content) {
+        const result = await axios({
+          method: "post",
+          url: "https://comp426fa19.cs.unc.edu/a09/tweets",
+          withCredentials: true,
+          data: {
+            type: "reply",
+            parent: id,
+            body: content
+          }
+        })
+          .then(function(result) {
+            alert("success!");
+            read(count, "refresh");
+          })
+          .catch(() => {
+            alert("failed!");
+          });
+      }
+      async function unlike(id) {
+        const result = await axios({
+          method: "put",
+          url: `https://comp426fa19.cs.unc.edu/a09/tweets/${id}/unlike`,
+          withCredentials: true
+        })
+          .then(function() {
+            read(count, "refresh");
+          })
+          .catch(err => {
+            console.log(err);
+          });
+      }
+
+      async function tweetDetail(id) {
+        const result = await axios({
+          method: "get",
+          url: `https://comp426fa19.cs.unc.edu/a09/tweets/${id}`,
+          withCredentials: true
+        });
+
+        $(".tweetModal").addClass("is-active");
+
+        let detail = print(result["data"]);
+        $(".modal-card-body").html(`<ul>${detail}</ul>`);
+      }
+      function print(json) {
+        let res = "";
+        for (let key in json) {
+          if (typeof json[key] == "object") {
+            json[key] = `\n{${print(json[key])}}\n`;
+          }
+          res += `<li>${key} : ${json[key]}</li>`;
+        }
+        return res;
+      }
+
+      async function read(limit, action) {
+        console.log(limit, action);
+        limit = limit || 1;
+        let skip = 0;
+        if (action == "refresh") {
+          skip = 0;
+        } else {
+          skip = limit - 1;
+        }
+        const result = await axios({
+          method: "get",
+          url: `https://comp426fa19.cs.unc.edu/a09/tweets/?limit=${50}&skip=${50 *
+            skip}`,
+          withCredentials: true
+        })
+          .then(function(result) {
+            showMain(result, action);
+          })
+          .catch(err => {
+            alert(err);
+          });
+      }
+
+      function showMain(result, action) {
+        console.log(result.data);
+        let allTweets = result.data;
+        let countMine = 0;
+        let allTweetCount = 0;
+
+        let tweetDivs = allTweets.map(function(x) {
+          allTweetCount++;
+          if (x.isMine) {
+            countMine++;
+            return `<div id=${x.id} style="background-color: pink" class="tweet" >
+                            <div class="content">
+                            ${x.body}
+                            <p>- by ${x.author}</p>
+                            </div>
+                            <div class="actions">
+                            <span style="cursor:pointer"  onclick="alert('you cannot like your own tweets!' )"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-heart"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg> &nbsp; ${x.likeCount}&nbsp;</span>
+                            <span style="cursor:pointer"  id="retweet" class="modalTrigger"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-repeat"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg> &nbsp; ${x.retweetCount}&nbsp;</span>
+                            <span style="cursor:pointer"  id="reply" class="modalTrigger " ><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-message-square"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg> &nbsp; ${x.replyCount}&nbsp;</span>
+                            <spanb style="cursor:pointer"  id="update" class="modalTrigger" onclick=(update(${x.id})) id="detail"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg> &nbsp;edit &nbsp;</spanb>
+                            <span style="cursor:pointer"  onclick=(tweetDetail(${x.id})) id="detail"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-info"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> &nbsp;more &nbsp;</span>
+                            <span style="cursor:pointer"  onclick="remove(${x.id})" ><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg> &nbsp; delete &nbsp;</span>
+                            </div>
+                        </div>`;
+          }
+
+          return `<div  id = ${x.id} class="tweet">
+                            <div class="content">
+                            ${x.body}
+                            <p>- by ${x.author}</p>
+                            </div>
+                            <div class="actions">
+                            <span style="cursor:pointer"  onclick="like(${x.id})" id="like" ><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-heart"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg> &nbsp; ${x.likeCount}&nbsp;</span>
+                            <span  style="cursor:pointer" id="retweet" class="modalTrigger"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-repeat"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg> &nbsp; ${x.retweetCount}&nbsp;</span>
+                            <span  style="cursor:pointer" id="reply" class="modalTrigger"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-message-square"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg> &nbsp; ${x.replyCount}&nbsp;</span>
+                            <span  style="cursor:pointer" onclick=(tweetDetail(${x.id})) id="detail"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-info"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> &nbsp;more &nbsp;</span>
+
+                            </div>
+                        </div>`;
+        });
+
+        $("#myTweetCount").html(`(${countMine})`);
+        $("#allTweetCount").html(`(${allTweetCount})`);
+        action == "refresh"
+          ? $("main").html(tweetDivs)
+          : $("main").append(tweetDivs);
+      }
+    </script>
+  </body>
+</html>
+
+<!-- current progress -->
+
+<!-- Done: 
+post 
+like
+unlike 
+destroy 
+read
+details
+update
+
+To do: 
+unlike throw exceptions 
+filter my tweets 
+auto update the page when there is update -->
