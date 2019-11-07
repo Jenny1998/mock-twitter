@@ -133,12 +133,14 @@
       </nav>
     </header>
     <main id="wrapper"></main>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.min.js"></script>
+
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
 
     <script>
       var count = 1;
+      var countMine = 0;
+      allTweetCount = 0;
       function increPage() {
         count++;
         read(count, "append");
@@ -365,8 +367,6 @@
       function showMain(result, action) {
         console.log(result.data);
         let allTweets = result.data;
-        let countMine = 0;
-        let allTweetCount = 0;
 
         let tweetDivs = allTweets.map(function(x) {
           allTweetCount++;
