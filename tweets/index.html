@@ -164,7 +164,7 @@
         $(".postBtn").click(async function() {
           if ($(".newPost").val().length > 0) {
             post($(".newPost").val());
-            $(".newPost").val();
+            $(".newPost").val('');
           } else {
             alert("pleae fill in the content of the post!");
           }
